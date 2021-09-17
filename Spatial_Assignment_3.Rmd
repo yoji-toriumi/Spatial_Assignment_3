@@ -1,0 +1,27 @@
+---
+title: "Spatial_Assignment_3"
+author: "Group22: Jeb Polstein, Matt Khinda, Yoji Toriumi"
+date: "9/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+```
+
+##
+
+
+```{r cars}
+
+```
+
+## 
+
+
+
+```{r pressure, echo=FALSE}
+
+```
+
+
