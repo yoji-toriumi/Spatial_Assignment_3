@@ -51,11 +51,6 @@ tracts <- tracts %>%
 boundary <- boundary %>% 
   st_transform(2249)
 tracts <- tracts[boundary, ]
-grid <- st_sf(st_make_grid(boundary, n = c(20, 20)))
-grid <- grid[boundary, ]
-clock <- zb_zone("Boston", distance = 0.5, distance_growth = 0, n_circles = 20)
-clock <- clock %>% st_transform(2249)
-clock <- clock[boundary, ]
 boundary <- boundary %>% st_transform(2249)
 ```
 
@@ -275,6 +270,9 @@ ggplot(hydro) +
 ```
 
 ```{r, echo=FALSE}
+grid <- st_sf(st_make_grid(boundary, n = c(20, 20)))
+grid <- grid[boundary, ]
+
 grid <- grid %>%
   mutate(num_hospitals = lengths(st_covers(grid, hospitals))) %>% 
   mutate(area = set_units(st_area(grid), km^2)) %>% 
@@ -292,6 +290,9 @@ plot_5
 ```
 
 ```{r, echo=FALSE}
+clock <- zb_zone("Boston", distance = 0.5, distance_growth = 0, n_circles = 20)
+clock <- clock %>% st_transform(2249)
+clock <- clock[boundary, ]
 clock <- clock %>%
   mutate(num_hospitals = lengths(st_covers(clock, hospitals))) %>% 
   mutate(area = set_units(st_area(clock), km^2)) %>% 
