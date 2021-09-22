@@ -1,11 +1,15 @@
 ---
 title: "Spatial_Assignment_3"
 author: "Group22: Jeb Polstein, Matt Khinda, Yoji Toriumi"
-date: "9/16/2021"
+date: "9/22/2021"
 output: html_document
 ---
+## Contribution Statement
+Boston is known for, among other things, its institutions, open spaces, and water. This map series investigates the spatial relationships among these elements, making clear the synergies and differences across space. Hospitals take on a different meaning when embedded in parks systems, parks mean something different when they are buffers to water, and so on. 
 
-```{r, results=FALSE}
+Yoji prepared a Github repository and made a foundation for this assignment, and then Matt, Jeb and Yoji created maps. We each experimented with code and each ultimately produced two maps. Therefore, we equally contributed to the assignment and so we equally receive 10 points each. 
+
+```{r, message=FALSE, results=FALSE}
 library(sf)
 library(tigris)
 library(tidyverse)
@@ -16,7 +20,8 @@ library(units)
 library(nngeo)
 ```
 
-## All of the data in this page are extracted from [Analyze Boston](https://data.boston.gov/).
+## Data
+All of the data in this page are extracted from [Analyze Boston](https://data.boston.gov/).
 ```{r, results=FALSE}
 hospitals <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/8f1e5741a4ee4c0f82925d17aab3c002_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 universities <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/cbf14bb032ef4bd38e20429f71acb61a_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
@@ -29,7 +34,6 @@ commcenter <- st_read("https://bostonopendata-boston.opendata.arcgis.com/dataset
 
 ## Transformed data into the geometory in Massachusetts.
 ```{r, results = FALSE}
-MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs"
 hospitals <- hospitals %>% 
   st_transform(2249)
 universities <- universities %>% 
@@ -48,7 +52,8 @@ commcenter <- commcenter %>%
   st_transform(2249)
 ```
 
-## Map-1: 
+## Map-1: Hospitals that are within 100 meters of open spaces
+This map looks at which hospitals in Boston are within 100 meters of opens paces. As a result, only one of 30 hospitals is located within 100 meters of open spaces and it indicates the necessity of planning open spaces nearby hospitals. 
 ```{r, message=FALSE}
 openspace_buffer <- st_buffer(openspace, dist = 100) %>% 
   st_union()
@@ -96,7 +101,8 @@ ggplot(hydro) +
                                          color = "gray"))
 ```
 
-## Map-2: 
+## Map-2: Openspaces by distance to a hospital
+This map looks at the open spaces distance from the closest hospitals. As a result, the average distance of open spaces from the closest hospitals is 1,458m. This is because there are islands that are treated as open spaces and they contribute to the increment of the average distance.
 ```{r, message=FALSE}
 openspace <- openspace %>% 
   mutate(hospitals_dist = st_nn(openspace, hospitals,
@@ -123,19 +129,19 @@ ggplot(hydro) +
            y = top_side - 500,
            label = paste("On average, a Boston openspace\nis ",
                          prettyNum(avg_hospitals_dist, digits = 3),
-                         "m",
+                         "m from hospitals",
                          sep = ""),
-           hjust = 0, size = 3) +
+           hjust = 0, vjust = 2, size = 3) +
   theme_map() +
   theme(panel.background = element_rect(fill = "antiquewhite"),
         legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray"))
 ```
 
-##Map-3: Open spaces that are within a 400 meters of a body of water 
+## Map-3: Open spaces that are within a 400 meters of a body of water 
 This map looks at which open spaces in Boston are within 400 meters of a body of water. The 400 meter buffer was chosen because it is often used as the normative planning standard for a 5 minute walk. This calculation was done by trimming the open spaces dataset to remove parks that extended beyond the limits of the water dataset, adding a 400m buffer to the water polygons, then calculating the intersection of the open space polygons and buffered water polygons. For this assignment, this map serves to satisfy calculation 14 (the number and proportion of C polygons that overlap with D polygons).
 
-```{r matt plot 1, echo=FALSE}
+```{r}
 #trimming open space dataset to remove Brewster Islands that fall outside the water polygon's xlim
 bstn_openspace <- openspace[boundary, ]
 
@@ -187,10 +193,10 @@ ggplot() +
 
 ```
   
-##Map-4: Hospitals with a 1000 meter radius of Boston University buildings
+## Map-4: Hospitals with a 1000 meter radius of Boston University buildings
 This map looks at which hospitals in Boston are within 1000 meters of a Boston University building. This calculation was done by filtering the universities only to include Boston University, adding a 1000m buffer to the BU building points, then subsetting the hospital dataset only to include those within the buffer. For this assignment, this map serves to satisfy calculation 2 (The number and proportion of B points with a specified distance of A points).
 
-```{r matt plot 2, echo=FALSE}
+```{r}
 #filtering for BU buildings
 BU_universities <- universities %>%
   filter(grepl("Boston University", Name))
@@ -243,8 +249,10 @@ ggplot() +
                                          color = "black", size = 0.25))
 
 ```
-##Map-5: 
 
+
+## Map-5: Neighborhoods by Community Center Count
+This map shows the number of community centers in Boston neighborhoods. Dorchester has the most, while Brighton, the Harbor Islands, and other neighborhoods have the fewest. The sheer size of Dorchester largely explains this; a community center per square km map (not shown here) suggested that downtown had the highest density of community centers. 
 ```{r}
 neighbor <- neighbor %>%
   mutate(num_commcenter = lengths(st_covers(neighbor, commcenter)))
@@ -264,7 +272,8 @@ theme_map() +
 ```
 
 
-##Map-6: how many open spaces overlap water?
+## Map-6: Open Spaces that Overlap with Water
+This map shows the open spaces in Boston that overlap bodies of water. This analysis could be useful in understanding the unique ecologies and recreation opportunities of the city's parks. The data are not perfect - the map may miss parks that are directly adjacent to water but do not strictly overlap due to the way the polygons are drawn, and it excludes parks that wholly contain bodies of water (such as Franklin Park and Scarboro Pond within it.)
 ```{r}
 openspace <- openspace %>%
   mutate(num_hydro = lengths(st_overlaps(openspace, hydro))) %>%
