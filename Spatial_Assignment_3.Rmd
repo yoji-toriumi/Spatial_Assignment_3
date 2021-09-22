@@ -188,7 +188,7 @@ ggplot() +
   
   labs(caption = "Data from data.boston.gov") +
   theme_map() +
-  theme(legend.position = c(0, 0.7),
+  theme(legend.position = c(0, 0.55),
         legend.background = element_rect(fill = alpha("white", 0.5)))
 
 ```
@@ -227,7 +227,7 @@ ggplot() +
           name = "Hospitals by distance to \nBoston University Buildings") +
   
   annotate(geom = "text", x = left_side, 
-           y = top_side - 4000, 
+           y = top_side - 6000, 
            label = paste("Of the ", 
                          prettyNum(n_hospitals, big.mark = ","),
                          " hospitals in Boston\n", 
