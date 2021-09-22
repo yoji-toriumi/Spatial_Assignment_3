@@ -5,7 +5,7 @@ date: "9/16/2021"
 output: html_document
 ---
 
-```{r, echo=FALSE}
+```{r, result = FALSE}
 library(sf)
 library(tigris)
 library(tidyverse)
@@ -17,7 +17,8 @@ library(nngeo)
 ```
 
 ## Extracted some data from [Analyze Boston](https://data.boston.gov/)
-```{r, echo=FALSE}
+
+```{r, message=FALSE, results = FALSE}
 hospitals <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/8f1e5741a4ee4c0f82925d17aab3c002_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 universities <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/cbf14bb032ef4bd38e20429f71acb61a_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 policest <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/e5a0066d38ac4e2abbc7918197a4f6af_6.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
@@ -25,12 +26,11 @@ openspace <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets
 bikenet <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/1f63e8e31f664833827c407c021ad60c_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 neighbor <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 hydro <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2b3c0fa13b1c468eb702a3645fcc6bcb_5.kml")
-tracts <- tracts(state = "MA", county = "Suffolk") 
+tracts <- tracts(state = "MA", county = "Suffolk")
 boundary <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/142500a77e2a4dbeb94a86f7e0b568bc_9.geojson?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 ```
 
-
-```{r, echo=FALSE}
+```{r, message=FALSE}
 MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs"
 hospitals <- hospitals %>% 
   st_transform(2249)
@@ -59,8 +59,8 @@ clock <- clock[boundary, ]
 boundary <- boundary %>% st_transform(2249)
 ```
 
-## FYI, all of the data are shown as follows
-```{r, echo=FALSE}
+## Some data are shown as follows
+```{r, message=FALSE}
 ggplot(neighbor) +
   geom_sf() +
   geom_sf(data = hospitals, color = "red") +
@@ -73,9 +73,7 @@ ggplot(neighbor) +
   annotation_scale()
 ```
 
-
-##
-```{r, echo=FALSE}
+```{r, message=FALSE}
 openspace_buffer <- st_buffer(openspace, dist = 100) %>% 
   st_union()
 
@@ -83,32 +81,31 @@ ggplot(openspace_buffer) +
   geom_sf() +
   theme_map()
 ```
-
-```{r, echo=FALSE}
+```{r, message=FALSE}
 hospitals_openspace <- hospitals[openspace_buffer, ]
 
 ggplot(openspace_buffer) +
   geom_sf() +
     geom_sf(data = hospitals_openspace,
           color = "tomato",
-          size = 0.5)
+          size = 0.5) +
   theme_map()
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 hospitals <- hospitals %>% 
   st_join(hospitals_openspace) %>% 
   mutate(by_openspace = !is.na(Name.y))
 ```
 
 ## how many hospitals are within 100m of openspaces
-```{r, echo=FALSE}
+```{r, message=FALSE}
 n_openspace_hospitals <- sum(hospitals$by_openspace)
 
 n_openspace_hospitals
 ```
 ## ratio
-```{r, echo=FALSE}
+```{r, message=FALSE}
 n_hospitals <- length(hospitals$by_openspace)
 
 pct_openspace_hospitals <- n_openspace_hospitals / n_hospitals * 100
@@ -116,7 +113,7 @@ pct_openspace_hospitals <- n_openspace_hospitals / n_hospitals * 100
 pct_openspace_hospitals
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 left_side <- st_bbox(hospitals)$xmin
 top_side  <- st_bbox(hospitals)$ymax
 
@@ -148,7 +145,7 @@ ggplot(hydro) +
                                          color = "gray"))
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 neighbor <- neighbor %>% 
   mutate(num_police = lengths(st_covers(neighbor, policest)))
 
@@ -169,7 +166,7 @@ ggplot(neighbor) +
 
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 neighbor <- neighbor %>%
   mutate(area = set_units(st_area(neighbor), km^2)) %>%
   mutate(police_dens = as.numeric(num_police/ area))
@@ -191,22 +188,19 @@ ggplot(neighbor) +
                                          color = "gray"))
 ```
 
-##Closest Point
-
-```{r, echo=FALSE}
+```{r, results = FALSE}
 openspace <- openspace %>% 
   mutate(hospitals_dist = st_nn(openspace, hospitals,
                                 returnDist = TRUE)$dist) %>% 
   mutate(hospitals_dist = as.numeric(hospitals_dist))
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 avg_hospitals_dist <- mean(openspace$hospitals_dist)
 
 avg_hospitals_dist
 ```
-
-```{r, echo=FALSE}
+```{r, message=FALSE}
 right_side <- st_bbox(openspace)$xmax
 left_side  <- st_bbox(openspace)$xmin
 top_side <- st_bbox(openspace)$ymax
@@ -235,7 +229,7 @@ ggplot(hydro) +
 ```
 
 ##Identifying Overlapping Polygons
-```{r, echo=FALSE}
+```{r, message=FALSE}
 neighbor <- neighbor %>%
   mutate(num_hospitals = lengths(st_covers(neighbor, hospitals))) %>% 
   mutate(has_hospitals = num_hospitals > 0)
@@ -245,7 +239,7 @@ n_hospitals_neighbor <- sum(neighbor$has_hospitals)
 n_hospitals_neighbor
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 left_side  <- st_bbox(neighbor)$xmin
 top_side <- st_bbox(neighbor)$ymax
 
@@ -274,7 +268,7 @@ ggplot(hydro) +
 
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 grid <- grid %>%
   mutate(num_hospitals = lengths(st_covers(grid, hospitals))) %>% 
   mutate(area = set_units(st_area(grid), km^2)) %>% 
@@ -291,7 +285,7 @@ plot_5 <- ggplot(grid) +
 plot_5
 ```
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 clock <- clock %>%
   mutate(num_hospitals = lengths(st_covers(clock, hospitals))) %>% 
   mutate(area = set_units(st_area(clock), km^2)) %>% 
