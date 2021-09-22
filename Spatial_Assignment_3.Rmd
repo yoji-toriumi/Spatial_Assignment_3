@@ -17,7 +17,7 @@ library(nngeo)
 ```
 
 ## Extracted some data from [Analyze Boston](https://data.boston.gov/)
-```{r, echo=FALSE}
+```{r Import Data, echo=FALSE}
 hospitals <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/8f1e5741a4ee4c0f82925d17aab3c002_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 universities <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/cbf14bb032ef4bd38e20429f71acb61a_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 policest <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/e5a0066d38ac4e2abbc7918197a4f6af_6.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
@@ -26,11 +26,11 @@ bikenet <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/1
 neighbor <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 hydro <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2b3c0fa13b1c468eb702a3645fcc6bcb_5.kml")
 tracts <- tracts(state = "MA", county = "Suffolk") 
-boundary <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/142500a77e2a4dbeb94a86f7e0b568bc_9.geojson?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
+boundary <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/142500a77e2a4dbeb94a86f7e0b568bc_9.geojson?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
 ```
 
 
-```{r, echo=FALSE}
+```{r Transforming Data, echo=FALSE}
 MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs"
 hospitals <- hospitals %>% 
   st_transform(2249)
@@ -51,11 +51,6 @@ tracts <- tracts %>%
 boundary <- boundary %>% 
   st_transform(2249)
 tracts <- tracts[boundary, ]
-grid <- st_sf(st_make_grid(boundary, n = c(20, 20)))
-grid <- grid[boundary, ]
-clock <- zb_zone("Boston", distance = 0.5, distance_growth = 0, n_circles = 20)
-clock <- clock %>% st_transform(2249)
-clock <- clock[boundary, ]
 boundary <- boundary %>% st_transform(2249)
 ```
 
@@ -275,6 +270,9 @@ ggplot(hydro) +
 ```
 
 ```{r, echo=FALSE}
+grid <- st_sf(st_make_grid(boundary, n = c(20, 20)))
+grid <- grid[boundary, ]
+
 grid <- grid %>%
   mutate(num_hospitals = lengths(st_covers(grid, hospitals))) %>% 
   mutate(area = set_units(st_area(grid), km^2)) %>% 
@@ -292,6 +290,9 @@ plot_5
 ```
 
 ```{r, echo=FALSE}
+clock <- zb_zone("Boston", distance = 0.5, distance_growth = 0, n_circles = 20)
+clock <- clock %>% st_transform(2249)
+clock <- clock[boundary, ]
 clock <- clock %>%
   mutate(num_hospitals = lengths(st_covers(clock, hospitals))) %>% 
   mutate(area = set_units(st_area(clock), km^2)) %>% 
@@ -307,11 +308,117 @@ plot_7 <- ggplot(clock) +
 plot_7
 ```
 
-```{r, echo=FALSE}
+##Matt's Explorations  
+
+####Open spaces that are within a 400 meters of a body of water 
+This map looks at which open spaces in Boston are within 400 meters of a body of water. The 400 meter buffer was chosen because it is often used as the normative planning standard for a 5 minute walk. This calculation was done by trimming the open spaces dataset to remove parks that extended beyond the limits of the water dataset, adding a 400m buffer to the water polygons, then calculating the intersection of the open space polygons and buffered water polygons. For this assignment, this map serves to satisfy calculation 14 (the number and proportion of C polygons that overlap with D polygons).
+
+```{r matt plot 1, echo=FALSE}
+#trimming open space dataset to remove Brewster Islands that fall outside the water polygon's xlim
+bstn_openspace <- openspace[boundary, ]
+
+#creating a 400m buffer from the water
+hydro_buffer <- st_buffer(hydro, dist = 400) %>%
+  st_union()
+
+#calculating overlap in open space and water + buffer
+openspace_water <- bstn_openspace %>%
+  mutate(num_water = lengths(st_intersects(bstn_openspace, hydro_buffer))) %>%
+  mutate(has_water = num_water > 0)
+
+n_openspace_water <- sum(openspace_water$has_water)
+n_openspace <- nrow(bstn_openspace)
+pct_openspace_water <- n_openspace_water / n_openspace * 100
+
+#plotting
+left_side  <- st_bbox(hydro)$xmin
+bottom_side <- st_bbox(hydro)$ymin
+
+ggplot() +
+  geom_sf(data = hydro, color = NA, fill = "lightblue") +
+  geom_sf(data = openspace_water, color = NA, aes(fill = has_water), alpha = 0.4, size = 0.5) +
+  scale_fill_manual(values = c("red", "darkgreen"), 
+                    name = "Boston open spaces\nby distance from a body of water", 
+                    labels = c("Open spaces that are not within\n 400m of a body of water", 
+                               "Open spaces that are within\n 400m of a body of water"),
+                    ) +
+  
+  geom_sf(data = hydro_buffer, aes(color = "400m from waterfront", linetype = "400m from waterfront"), alpha = 0.8, fill = NA) +
+  scale_color_manual(values = "darkgrey", name = "") +
+  scale_linetype_manual(values = "longdash", name = "") +
+  
+  annotate(geom = "text", x = left_side, 
+           y = bottom_side - 5000, 
+           label = paste(n_openspace_water,"(",
+                          round(pct_openspace_water, digits = 1) ,
+                         "%) of Boston's open spaces are \nwithin 400 meters of", 
+                         "a body of water."),
+           hjust = 0, vjust = 0, size = 3) +
+  
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  
+  labs(caption = "Data from data.boston.gov") +
+  theme_map() +
+  theme(legend.position = c(0, 0.7),
+        legend.background = element_rect(fill = alpha("white", 0.5)))
 
 ```
+  
+####Hospitals with a 1000 meter radius of Boston University buildings
+This map looks at which hospitals in Boston are within 1000 meters of a Boston University building. This calculation was done by filtering the universities only to include Boston University, adding a 1000m buffer to the BU building points, then subsetting the hospital dataset only to include those within the buffer. For this assignment, this map serves to satisfy calculation 2 (The number and proportion of B points with a specified distance of A points).
 
-```{r, echo=FALSE}
+```{r matt plot 2, echo=FALSE}
+#filtering for BU buildings
+BU_universities <- universities %>%
+  filter(grepl("Boston University", Name))
+
+#adding a buffer to BU buildings
+BU_buffer <- st_buffer(BU_universities, dist = 1000) %>%
+  st_union
+
+#subsetting hospitas within the buffer
+BU_hospitals <- hospitals[BU_buffer, ]
+
+#calculating number and percent of hospitals near BU
+n_BU_hospitals <- nrow(BU_hospitals)
+pct_BU_hospitals <- n_BU_hospitals / n_hospitals * 100
+
+#plotting
+left_side  <- st_bbox(hydro)$xmin
+top_side <- st_bbox(hydro)$ymax
+
+ggplot() +
+  geom_sf(data = hydro, color = NA, fill = "lightblue") +
+  geom_sf(data = boundary, fill = "white", color = NA) +
+  geom_sf(data = BU_buffer, fill = NA, color = "black", size = .5, linetype = "twodash") +
+  geom_sf(data = hospitals, aes(color = "Hospitals more than 1000 meters from BU building"), size = .5) +
+  geom_sf(data = BU_hospitals, aes(color = "Hospitals within 1000 meters of a BU building"), size = .5) +
+  geom_sf(data = BU_universities, aes(color = "BU building"), size = .5) +
+  scale_color_manual(values = c("black","purple","red"),
+          name = "Hospitals by distance to \nBoston University Buildings") +
+  
+  annotate(geom = "text", x = left_side, 
+           y = top_side - 4000, 
+           label = paste("Of the ", 
+                         prettyNum(n_hospitals, big.mark = ","),
+                         " hospitals in Boston\n", 
+                         prettyNum(n_BU_hospitals, big.mark = ","),
+                         " (", 
+                         prettyNum(pct_BU_hospitals, digits = 0),
+                         "%) are within 1000\nmeters of a Boston University building.",
+                         sep = ""),
+           hjust = 0, vjust = 0, size = 3) +
+  
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  
+  labs(caption = "Data from data.boston.gov") +
+  
+  theme_map() +
+  theme(panel.background = element_rect(fill = "#EDEDED"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "black", size = 0.25))
 
 ```
 
