@@ -243,7 +243,8 @@ ggplot() +
                                          color = "black", size = 0.25))
 
 ```
-##Map-5: 
+##Map-5: Neighborhoods by Community Center Count
+This map shows the number of community centers in Boston neighborhoods. Dorchester has the most, while Brighton, the Harbor Islands, and other neighborhoods have the fewest. The sheer size of Dorchester largely explains this; a community center per square km map (not shown here) suggested that downtown had the highest density of community centers. 
 
 ```{r}
 neighbor <- neighbor %>%
@@ -264,7 +265,9 @@ theme_map() +
 ```
 
 
-##Map-6: how many open spaces overlap water?
+##Map-6: Open Spaces that Overlap with Water
+This map shows the open spaces in Boston that overlap bodies of water. This analysis could be useful in understanding the unique ecologies and recreation opportunities of the city's parks. The data are not perfect - the map may miss parks that are directly adjacent to water but do not strictly overlap due to the way the polygons are drawn, and it excludes parks that wholly contain bodies of water (such as Franklin Park and Scarboro Pond within it.)
+
 ```{r}
 openspace <- openspace %>%
   mutate(num_hydro = lengths(st_overlaps(openspace, hydro))) %>%
