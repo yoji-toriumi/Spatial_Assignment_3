@@ -313,7 +313,7 @@ plot_7
 ####Open spaces that are within a 400 meters of a body of water 
 This map looks at which open spaces in Boston are within 400 meters of a body of water. The 400 meter buffer was chosen because it is often used as the normative planning standard for a 5 minute walk. This calculation was done by trimming the open spaces dataset to remove parks that extended beyond the limits of the water dataset, adding a 400m buffer to the water polygons, then calculating the intersection of the open space polygons and buffered water polygons. For this assignment, this map serves to satisfy calculation 14 (the number and proportion of C polygons that overlap with D polygons).
 
-```{r, echo=FALSE}
+```{r matt plot 1, echo=FALSE}
 #trimming open space dataset to remove Brewster Islands that fall outside the water polygon's xlim
 bstn_openspace <- openspace[boundary, ]
 
@@ -327,8 +327,13 @@ openspace_water <- bstn_openspace %>%
   mutate(has_water = num_water > 0)
 
 n_openspace_water <- sum(openspace_water$has_water)
+n_openspace <- nrow(bstn_openspace)
+pct_openspace_water <- n_openspace_water / n_openspace * 100
 
 #plotting
+left_side  <- st_bbox(hydro)$xmin
+bottom_side <- st_bbox(hydro)$ymin
+
 ggplot() +
   geom_sf(data = hydro, color = NA, fill = "lightblue") +
   geom_sf(data = openspace_water, color = NA, aes(fill = has_water), alpha = 0.4, size = 0.5) +
@@ -342,16 +347,78 @@ ggplot() +
   scale_color_manual(values = "darkgrey", name = "") +
   scale_linetype_manual(values = "longdash", name = "") +
   
+  annotate(geom = "text", x = left_side, 
+           y = bottom_side - 5000, 
+           label = paste(n_openspace_water,"(",
+                          round(pct_openspace_water, digits = 1) ,
+                         "%) of Boston's open spaces are \nwithin 400 meters of", 
+                         "a body of water."),
+           hjust = 0, vjust = 0, size = 3) +
+  
   annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tl", style = north_arrow_minimal()) +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
   
   labs(caption = "Data from data.boston.gov") +
-  theme_map()
+  theme_map() +
+  theme(legend.position = c(0, 0.7),
+        legend.background = element_rect(fill = alpha("white", 0.5)))
 
 ```
+  
+####Hospitals with a 1000 meter radius of Boston University buildings
+This map looks at which hospitals in Boston are within 1000 meters of a Boston University building. This calculation was done by filtering the universities only to include Boston University, adding a 1000m buffer to the BU building points, then subsetting the hospital dataset only to include those within the buffer. For this assignment, this map serves to satisfy calculation 2 (The number and proportion of B points with a specified distance of A points).
 
-```{r, echo=FALSE}
+```{r matt plot 2, echo=FALSE}
+#filtering for BU buildings
+BU_universities <- universities %>%
+  filter(grepl("Boston University", Name))
 
+#adding a buffer to BU buildings
+BU_buffer <- st_buffer(BU_universities, dist = 1000) %>%
+  st_union
+
+#subsetting hospitas within the buffer
+BU_hospitals <- hospitals[BU_buffer, ]
+
+#calculating number and percent of hospitals near BU
+n_BU_hospitals <- nrow(BU_hospitals)
+pct_BU_hospitals <- n_BU_hospitals / n_hospitals * 100
+
+#plotting
+left_side  <- st_bbox(hydro)$xmin
+top_side <- st_bbox(hydro)$ymax
+
+ggplot() +
+  geom_sf(data = hydro, color = NA, fill = "lightblue") +
+  geom_sf(data = boundary, fill = "white", color = NA) +
+  geom_sf(data = BU_buffer, fill = NA, color = "black", size = .5, linetype = "twodash") +
+  geom_sf(data = hospitals, aes(color = "Hospitals more than 1000 meters from BU building"), size = .5) +
+  geom_sf(data = BU_hospitals, aes(color = "Hospitals within 1000 meters of a BU building"), size = .5) +
+  geom_sf(data = BU_universities, aes(color = "BU building"), size = .5) +
+  scale_color_manual(values = c("black","purple","red"),
+          name = "Hospitals by distance to \nBoston University Buildings") +
+  
+  annotate(geom = "text", x = left_side, 
+           y = top_side - 4000, 
+           label = paste("Of the ", 
+                         prettyNum(n_hospitals, big.mark = ","),
+                         " hospitals in Boston\n", 
+                         prettyNum(n_BU_hospitals, big.mark = ","),
+                         " (", 
+                         prettyNum(pct_BU_hospitals, digits = 0),
+                         "%) are within 1000\nmeters of a Boston University building.",
+                         sep = ""),
+           hjust = 0, vjust = 0, size = 3) +
+  
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  
+  labs(caption = "Data from data.boston.gov") +
+  
+  theme_map() +
+  theme(panel.background = element_rect(fill = "#EDEDED"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "black", size = 0.25))
 
 ```
 
