@@ -5,7 +5,7 @@ date: "9/16/2021"
 output: html_document
 ---
 
-```{r, echo=FALSE}
+```{r, results=FALSE}
 library(sf)
 library(tigris)
 library(tidyverse)
@@ -16,102 +16,55 @@ library(units)
 library(nngeo)
 ```
 
-## Extracted some data from [Analyze Boston](https://data.boston.gov/)
-```{r Import Data, echo=FALSE}
+## All of the data in this page are extracted from [Analyze Boston](https://data.boston.gov/).
+```{r, results=FALSE}
 hospitals <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/8f1e5741a4ee4c0f82925d17aab3c002_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 universities <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/cbf14bb032ef4bd38e20429f71acb61a_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
-policest <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/e5a0066d38ac4e2abbc7918197a4f6af_6.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 openspace <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2868d370c55d4d458d4ae2224ef8cddd_7.kml")
-bikenet <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/1f63e8e31f664833827c407c021ad60c_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 neighbor <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D")
 hydro <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2b3c0fa13b1c468eb702a3645fcc6bcb_5.kml")
-tracts <- tracts(state = "MA", county = "Suffolk") 
 boundary <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/142500a77e2a4dbeb94a86f7e0b568bc_9.geojson?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
+commcenter <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/acedd06b39854088b0f2fefccffebf84_0.geojson?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D", quiet = TRUE)
 ```
 
-
-```{r Transforming Data, echo=FALSE}
+## Transformed data into the geometory in Massachusetts.
+```{r, results = FALSE}
 MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs"
 hospitals <- hospitals %>% 
   st_transform(2249)
 universities <- universities %>% 
   st_transform(2249)
-policest <- policest %>% 
-  st_transform(2249)
 openspace <- openspace %>% 
-  st_transform(2249)
-bikenet <- bikenet %>% 
   st_transform(2249)
 neighbor <- neighbor %>% 
   st_transform(2249)
 hydro <- hydro %>% 
   st_transform(2249)
-tracts <- tracts %>% 
+boundary <- boundary %>% 
   st_transform(2249)
 boundary <- boundary %>% 
   st_transform(2249)
-tracts <- tracts[boundary, ]
-boundary <- boundary %>% st_transform(2249)
+commcenter <- commcenter %>%
+  st_transform(2249)
 ```
 
-## FYI, all of the data are shown as follows
-```{r, echo=FALSE}
-ggplot(neighbor) +
-  geom_sf() +
-  geom_sf(data = hospitals, color = "red") +
-  geom_sf(data = universities, color = "orange") +
-  geom_sf(data = policest, color = "green") +
-  geom_sf(data = bikenet) +
-  geom_sf(data = openspace) +
-  geom_sf(data = hydro, fill = "blue") +
-  theme_classic() +
-  annotation_scale()
-```
-
-
-##
-```{r, echo=FALSE}
+## Map-1: 
+```{r, message=FALSE}
 openspace_buffer <- st_buffer(openspace, dist = 100) %>% 
   st_union()
 
-ggplot(openspace_buffer) +
-  geom_sf() +
-  theme_map()
-```
-
-```{r, echo=FALSE}
 hospitals_openspace <- hospitals[openspace_buffer, ]
 
-ggplot(openspace_buffer) +
-  geom_sf() +
-    geom_sf(data = hospitals_openspace,
-          color = "tomato",
-          size = 0.5)
-  theme_map()
-```
-
-```{r, echo=FALSE}
 hospitals <- hospitals %>% 
   st_join(hospitals_openspace) %>% 
   mutate(by_openspace = !is.na(Name.y))
-```
 
-## how many hospitals are within 100m of openspaces
-```{r, echo=FALSE}
 n_openspace_hospitals <- sum(hospitals$by_openspace)
 
-n_openspace_hospitals
-```
-## ratio
-```{r, echo=FALSE}
 n_hospitals <- length(hospitals$by_openspace)
 
 pct_openspace_hospitals <- n_openspace_hospitals / n_hospitals * 100
 
-pct_openspace_hospitals
-```
-
-```{r, echo=FALSE}
 left_side <- st_bbox(hospitals)$xmin
 top_side  <- st_bbox(hospitals)$ymax
 
@@ -136,72 +89,22 @@ ggplot(hydro) +
                          prettyNum(pct_openspace_hospitals, digits = 0),
                          "%) are within 100\nmeters of openspace.",
                          sep = ""),
-           hjust = 0, vjust = 0, size = 3) +
+           hjust = 0, vjust = 0.7, size = 3) +
   theme_map() +
     theme(panel.background = element_rect(fill = "antiquewhite"),
         legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray"))
 ```
 
-```{r, echo=FALSE}
-neighbor <- neighbor %>% 
-  mutate(num_police = lengths(st_covers(neighbor, policest)))
-
-ggplot(neighbor) +
-  geom_sf(color = NA,
-          aes(fill = num_police)) +
-  scale_fill_viridis_c(name = "Boston neighborhoods\nbynumber of police station",
-                       breaks = breaks <- seq(0, 2, by = 1),
-                       labels = paste(prettyNum(breaks),
-                                      "police stations")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-  theme_map() +
-  theme(legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-
-
-```
-
-```{r, echo=FALSE}
-neighbor <- neighbor %>%
-  mutate(area = set_units(st_area(neighbor), km^2)) %>%
-  mutate(police_dens = as.numeric(num_police/ area))
-
-ggplot(neighbor) +
-  geom_sf(color = NA,
-          aes(fill = police_dens)) +
-  scale_fill_viridis_c(name =
-                         "Boston neighborhoods \nby police station density",
-                       breaks = breaks <- seq(0, 0.62, by = 0.1),
-                       labels = paste(prettyNum(breaks),
-                                      "police stations per sq km")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-  theme_map() +
-  theme(legend.position = "right",
-         legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-```
-
-##Closest Point
-
-```{r, echo=FALSE}
+## Map-2: 
+```{r, message=FALSE}
 openspace <- openspace %>% 
   mutate(hospitals_dist = st_nn(openspace, hospitals,
-                                returnDist = TRUE)$dist) %>% 
+                                returnDist = TRUE, progress = FALSE)$dist) %>% 
   mutate(hospitals_dist = as.numeric(hospitals_dist))
-```
 
-```{r, echo=FALSE}
 avg_hospitals_dist <- mean(openspace$hospitals_dist)
 
-avg_hospitals_dist
-```
-
-```{r, echo=FALSE}
 right_side <- st_bbox(openspace)$xmax
 left_side  <- st_bbox(openspace)$xmin
 top_side <- st_bbox(openspace)$ymax
@@ -229,88 +132,7 @@ ggplot(hydro) +
                                          color = "gray"))
 ```
 
-##Identifying Overlapping Polygons
-```{r, echo=FALSE}
-neighbor <- neighbor %>%
-  mutate(num_hospitals = lengths(st_covers(neighbor, hospitals))) %>% 
-  mutate(has_hospitals = num_hospitals > 0)
-
-n_hospitals_neighbor <- sum(neighbor$has_hospitals)
-
-n_hospitals_neighbor
-```
-
-```{r, echo=FALSE}
-left_side  <- st_bbox(neighbor)$xmin
-top_side <- st_bbox(neighbor)$ymax
-
-ggplot(hydro) +
-  geom_sf(fill = "cadetblue1", color = NA) +
-  geom_sf(data = neighbor,
-          aes(fill = has_hospitals)) +
-  scale_fill_manual(values = c("chartreuse1", "tomato"),
-                    name = "Boston Neighborhoods\nby presence of a hospital",
-                    labels = c("Neighborhood without\nany presence of a hospital",
-                               "Neighborhood with \n presence of a hospital(s)")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-  annotate(geom = "text", x = left_side, 
-           y = top_side - 1000, 
-           label = paste(n_hospitals_neighbor,
-                         "of Boston's",
-                         length(neighbor$Name),
-                         "neighborhoods contain a hospital(s)."),
-           hjust = 0, vjust = -5, size = 3) +
-  theme_map() +
-  theme(panel.background = element_rect(fill = "antiquewhite"),
-        legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-
-```
-
-```{r, echo=FALSE}
-grid <- st_sf(st_make_grid(boundary, n = c(20, 20)))
-grid <- grid[boundary, ]
-
-grid <- grid %>%
-  mutate(num_hospitals = lengths(st_covers(grid, hospitals))) %>% 
-  mutate(area = set_units(st_area(grid), km^2)) %>% 
-  mutate(hospitals_dens = as.numeric(num_hospitals / area))
-
-
-plot_5 <- ggplot(grid) +
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(data = grid, alpha = 1/2, aes(fill = hospitals_dens)) +
-  scale_fill_viridis_c(name = "Schools per square km") +
-  labs(caption = "Map tiles and data by OpenStreetMap") +
-  theme_void()
-
-plot_5
-```
-
-```{r, echo=FALSE}
-clock <- zb_zone("Boston", distance = 0.5, distance_growth = 0, n_circles = 20)
-clock <- clock %>% st_transform(2249)
-clock <- clock[boundary, ]
-clock <- clock %>%
-  mutate(num_hospitals = lengths(st_covers(clock, hospitals))) %>% 
-  mutate(area = set_units(st_area(clock), km^2)) %>% 
-  mutate(hospitals_dens = as.numeric(num_hospitals / area))
-
-plot_7 <- ggplot(clock) +
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(alpha = 1/2, aes(fill = hospitals_dens)) +
-  scale_fill_viridis_c(name = "Hospitals per square km") +
-  labs(caption = "Map tiles and data by OpenStreetMap") +
-  theme_void()
-
-plot_7
-```
-
-##Matt's Explorations  
-
-####Open spaces that are within a 400 meters of a body of water 
+##Map-3: Open spaces that are within a 400 meters of a body of water 
 This map looks at which open spaces in Boston are within 400 meters of a body of water. The 400 meter buffer was chosen because it is often used as the normative planning standard for a 5 minute walk. This calculation was done by trimming the open spaces dataset to remove parks that extended beyond the limits of the water dataset, adding a 400m buffer to the water polygons, then calculating the intersection of the open space polygons and buffered water polygons. For this assignment, this map serves to satisfy calculation 14 (the number and proportion of C polygons that overlap with D polygons).
 
 ```{r matt plot 1, echo=FALSE}
@@ -365,7 +187,7 @@ ggplot() +
 
 ```
   
-####Hospitals with a 1000 meter radius of Boston University buildings
+##Map-4: Hospitals with a 1000 meter radius of Boston University buildings
 This map looks at which hospitals in Boston are within 1000 meters of a Boston University building. This calculation was done by filtering the universities only to include Boston University, adding a 1000m buffer to the BU building points, then subsetting the hospital dataset only to include those within the buffer. For this assignment, this map serves to satisfy calculation 2 (The number and proportion of B points with a specified distance of A points).
 
 ```{r matt plot 2, echo=FALSE}
@@ -421,26 +243,61 @@ ggplot() +
                                          color = "black", size = 0.25))
 
 ```
+##Map-5: 
 
-```{r, echo=FALSE}
-
+```{r}
+neighbor <- neighbor %>%
+  mutate(num_commcenter = lengths(st_covers(neighbor, commcenter)))
+ggplot(neighbor) +
+  geom_sf(color = NA, 
+          aes(fill = num_commcenter)) +
+  scale_fill_viridis_c(name = "Boston neighborhoods\nby number of community centers",
+                       breaks = breaks <- seq(0, 10, by = 1),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "commcenter")) +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray"))
 ```
 
-```{r, echo=FALSE}
 
+##Map-6: how many open spaces overlap water?
+```{r}
+openspace <- openspace %>%
+  mutate(num_hydro = lengths(st_overlaps(openspace, hydro))) %>%
+  mutate(has_hydro = num_hydro > 0)
+n_hydro_openspace <- sum(openspace$has_hydro)
+
+left_side  <- st_bbox(hydro)$xmin
+top_side <- st_bbox(hydro)$ymax
+ggplot(hydro) +
+  geom_sf(fill = "lightblue", color = NA) +
+  geom_sf(data = openspace,
+          color = NA,
+          aes(fill = has_hydro)) +
+  scale_fill_manual(values = c("darkseagreen1", "forestgreen"),
+          name = "Boston Open Spaces\nby presence of a body of water", 
+          labels = c("Open Space without\nan overlapping body of water",
+                     "Open Space with an\noverlapping body of water")) +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  annotate(geom = "text", x = left_side, 
+           y = top_side - 2200, 
+           label = paste(n_hydro_openspace ,
+                         "of Boston's", 
+                         length(openspace$Name),
+                         "Open Spaces contain\nor overlap with", 
+                         "a body of water."),
+           hjust = 0, vjust = 0, size = 3) +
+  theme_map() +
+  theme(panel.background = element_rect(fill = "gray"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray"))
 ```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-
-
-
 
 
 
