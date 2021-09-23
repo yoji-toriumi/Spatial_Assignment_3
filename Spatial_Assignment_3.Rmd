@@ -1,11 +1,11 @@
 ---
-title: "Spatial_Assignment_3"
+  title: "Spatial_Assignment_3"
 author: "Group22: Jeb Polstein, Matt Khinda, Yoji Toriumi"
 date: "9/22/2021"
 output: html_document
 ---
-## Contribution Statement
-Boston is known for, among other things, its institutions, open spaces, and water. This map series investigates the spatial relationships among these elements, making clear the synergies and differences across space. Hospitals take on a different meaning when embedded in parks systems, parks mean something different when they are buffers to water, and so on. 
+  ## Contribution Statement
+  Boston is known for, among other things, its institutions, open spaces, and water. This map series investigates the spatial relationships among these elements, making clear the synergies and differences across space. Hospitals take on a different meaning when embedded in parks systems, parks mean something different when they are buffers to water, and so on. 
 
 Yoji prepared a Github repository and made a foundation for this assignment, and then Matt, Jeb and Yoji created maps. We each experimented with code and each ultimately produced two maps. Therefore, we equally contributed to the assignment and so we equally receive 10 points each. 
 
@@ -96,7 +96,7 @@ ggplot(hydro) +
                          sep = ""),
            hjust = 0, vjust = 0.7, size = 3) +
   theme_map() +
-    theme(panel.background = element_rect(fill = "antiquewhite"),
+  theme(panel.background = element_rect(fill = "antiquewhite"),
         legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray"))
 ```
@@ -169,7 +169,7 @@ ggplot() +
                     name = "Boston open spaces\nby distance from a body of water", 
                     labels = c("Open spaces that are not within\n 400m of a body of water", 
                                "Open spaces that are within\n 400m of a body of water"),
-                    ) +
+  ) +
   
   geom_sf(data = hydro_buffer, aes(color = "400m from waterfront", linetype = "400m from waterfront"), alpha = 0.8, fill = NA) +
   scale_color_manual(values = "darkgrey", name = "") +
@@ -178,7 +178,7 @@ ggplot() +
   annotate(geom = "text", x = left_side, 
            y = bottom_side - 5000, 
            label = paste(n_openspace_water,"(",
-                          round(pct_openspace_water, digits = 1) ,
+                         round(pct_openspace_water, digits = 1) ,
                          "%) of Boston's open spaces are \nwithin 400 meters of", 
                          "a body of water."),
            hjust = 0, vjust = 0, size = 3) +
@@ -192,7 +192,7 @@ ggplot() +
         legend.background = element_rect(fill = alpha("white", 0.5)))
 
 ```
-  
+
 ## Map-4: Hospitals with a 1000 meter radius of Boston University buildings
 This map looks at which hospitals in Boston are within 1000 meters of a Boston University building. This calculation was done by filtering the universities only to include Boston University, adding a 1000m buffer to the BU building points, then subsetting the hospital dataset only to include those within the buffer. For this assignment, this map serves to satisfy calculation 2 (The number and proportion of B points with a specified distance of A points).
 
@@ -224,7 +224,7 @@ ggplot() +
   geom_sf(data = BU_hospitals, aes(color = "Hospitals within 1000 meters of a BU building"), size = .5) +
   geom_sf(data = BU_universities, aes(color = "BU building"), size = .5) +
   scale_color_manual(values = c("black","purple","red"),
-          name = "Hospitals by distance to \nBoston University Buildings") +
+                     name = "Hospitals by distance to \nBoston University Buildings") +
   
   annotate(geom = "text", x = left_side, 
            y = top_side - 6000, 
@@ -249,11 +249,7 @@ ggplot() +
                                          color = "black", size = 0.25))
 
 ```
-<<<<<<< HEAD
-=======
-##Map-5: Neighborhoods by Community Center Count
-This map shows the number of community centers in Boston neighborhoods. Dorchester has the most, while Brighton, the Harbor Islands, and other neighborhoods have the fewest. The sheer size of Dorchester largely explains this; a community center per square km map (not shown here) suggested that downtown had the highest density of community centers. 
->>>>>>> a20c1ff92c1c3221a9681bb688d002d2658bdcf6
+
 
 ## Map-5: Neighborhoods by Community Center Count
 This map shows the number of community centers in Boston neighborhoods. Dorchester has the most, while Brighton, the Harbor Islands, and other neighborhoods have the fewest. The sheer size of Dorchester largely explains this; a community center per square km map (not shown here) suggested that downtown had the highest density of community centers. 
@@ -270,20 +266,14 @@ ggplot(neighbor) +
   annotation_scale(location = "br") +
   annotation_north_arrow(location = "tr",
                          style = north_arrow_minimal()) +
-theme_map() +
+  theme_map() +
   theme(legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray"))
 ```
 
-<<<<<<< HEAD
+
 ## Map-6: Open Spaces that Overlap with Water
 This map shows the open spaces in Boston that overlap bodies of water. This analysis could be useful in understanding the unique ecologies and recreation opportunities of the city's parks. The data are not perfect - the map may miss parks that are directly adjacent to water but do not strictly overlap due to the way the polygons are drawn, and it excludes parks that wholly contain bodies of water (such as Franklin Park and Scarboro Pond within it.)
-=======
-
-##Map-6: Open Spaces that Overlap with Water
-This map shows the open spaces in Boston that overlap bodies of water. This analysis could be useful in understanding the unique ecologies and recreation opportunities of the city's parks. The data are not perfect - the map may miss parks that are directly adjacent to water but do not strictly overlap due to the way the polygons are drawn, and it excludes parks that wholly contain bodies of water (such as Franklin Park and Scarboro Pond within it.)
-
->>>>>>> a20c1ff92c1c3221a9681bb688d002d2658bdcf6
 ```{r}
 openspace <- openspace %>%
   mutate(num_hydro = lengths(st_overlaps(openspace, hydro))) %>%
@@ -316,274 +306,6 @@ ggplot(hydro) +
   theme(panel.background = element_rect(fill = "gray"),
         legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray"))
-```
-
-
-install.packages("tmaptools")
-
-
-#jeb maps
-
----
-title: "jp test"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```
-library(sf)
-library(tidyverse)
-library(ggthemes)
-library(ggspatial)
-library(units)
-library(nngeo)
-```
-```{r, echo=FALSE}
-hospitals <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/8f1e5741a4ee4c0f82925d17aab3c002_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-universities <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/cbf14bb032ef4bd38e20429f71acb61a_2.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-policest <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/e5a0066d38ac4e2abbc7918197a4f6af_6.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-openspace <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2868d370c55d4d458d4ae2224ef8cddd_7.kml", quiet = TRUE)
-bikenet <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/1f63e8e31f664833827c407c021ad60c_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-neighbor <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-hydro <- read_sf("https://bostonopendata-boston.opendata.arcgis.com/datasets/2b3c0fa13b1c468eb702a3645fcc6bcb_5.kml", quiet = TRUE)
-boundary <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/142500a77e2a4dbeb94a86f7e0b568bc_9.geojson?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D", quiet = TRUE)
-commcenter <- st_read("https://bostonopendata-boston.opendata.arcgis.com/datasets/acedd06b39854088b0f2fefccffebf84_0.geojson?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D", quiet = TRUE)
-```
-```{r, echo=FALSE}
-MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs"
-hospitals <- hospitals %>% 
-  st_transform(2249)
-universities <- universities %>% 
-  st_transform(2249)
-policest <- policest %>% 
-  st_transform(2249)
-openspace <- openspace %>% 
-  st_transform(2249)
-bikenet <- bikenet %>% 
-  st_transform(2249)
-neighbor <- neighbor %>% 
-  st_transform(2249)
-hydro <- hydro %>% 
-  st_transform(2249)
-boundary <- boundary %>% 
-  st_transform(2249)
-commcenter <- commcenter %>%
-  st_transform(2249)
-
-```
-
-```{r, echo=FALSE}
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = boundary, fill = NA, color = "black") +
-  theme_map() +
-  annotation_scale()
-  
-```
-
-```{r, echo=FALSE}
-
-policest_buffer <- st_buffer(policest, dist = 3000) %>%
-  st_union()
-
-ggplot(policest_buffer) +
-  geom_sf() +
-  theme_map()
-
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = boundary, fill = NA, color = "black") +
-  geom_sf(data = policest_buffer, fill = "coral", color = NA, alpha = 0.5) +
-  geom_sf(data = policest, shape = 18) +
-  theme_map() +
-  annotation_scale()
-
-```
-
-```{r, echo=FALSE}
-
-hospitals_buffer <- st_buffer(hospitals, dist = 3000) %>%
-  st_union()
-
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = boundary, fill = NA, color = "black") +
-  geom_sf(data = hospitals_buffer, fill = "chocolate1", color = NA, alpha = 0.5) +
-  geom_sf(data = hospitals, shape = 17) +
-  theme_map() +
-  annotation_scale()
-
-```
-
-```{r, echo=FALSE}
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = boundary, fill = NA, color = "black") +
-  geom_sf(data = hospitals_buffer, fill = "blueviolet", color = NA, alpha = 0.2) +
-  geom_sf(data = hospitals, shape = 17) +
-  geom_sf(data = bikenet, color = "black") +
-  theme_map() +
-  annotation_scale()
-  
-```
-
-```{r, echo=FALSE}
-
-bikenet_buffer <- st_buffer(bikenet, dist = 500) %>%
-  st_union()
-
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = boundary, fill = NA, color = "black") +
-  geom_sf(data = bikenet_buffer, fill = "blueviolet", color = NA, alpha = 0.8) +
-  geom_sf(data = hospitals, shape = 17) +
-  geom_sf(data = bikenet, color = "black") +
-  theme_map() +
-  annotation_scale()
-  
-```
-
-```{r, echo=FALSE}
-hospitals_bikenet <- hospitals[bikenet,]
-  
-ggplot(bikenet_buffer) +
-  geom_sf() +
-  geom_sf(data = hospitals_bikenet) +
-  geom_sf(dat = hospitals) +
-  theme_map()
-```
-
-
-``` {r, echo= FALSE}
-
-hospitals <- hospitals %>%
-  st_join(hospitals_bikenet) %>%
-  mutate(by_bikenet = !is.na(Name.y))
-
-n_hospitals_bikenet <- sum(hospitals$by_bikenet)
-
-n_hospitals_bikenet
-
-```
- 
-``` {r, echo= FALSE}
-
-typeof(hospitals$by_bikenet)
-
-```
-
-
-```{r, echo=FALSE}
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = commcenter, color = "black") +
-  theme_map() +
-  annotation_scale()
-  
-```
-```{r, echo=FALSE}
-
-neighbor <- neighbor %>%
-  mutate(num_commcenter = lengths(st_covers(neighbor, commcenter)))
-
-ggplot(neighbor) +
-  geom_sf(color = NA, 
-          aes(fill = num_commcenter)) +
-  scale_fill_viridis_c(name = "Boston neighborhoods\nby number of community centers",
-                       breaks = breaks <- seq(0, 10, by = 1),
-                       labels = paste(prettyNum(breaks, big.mark = ","),
-                                      "commcenter")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-theme_map() +
-  theme(legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-
-```
-
-```{r, echo=FALSE}
-
-neighbor <- neighbor %>%
-  mutate(area = set_units(st_area(neighbor), km^2)) %>%
-  mutate(commcenter_dens = as.numeric(num_commcenter / area))
-
-ggplot(neighbor) +
-  geom_sf(color = NA, 
-          aes(fill = commcenter_dens)) +
-    scale_fill_viridis_c(name = 
-                           "Boston neighborhoods\nby community center density",
-                       breaks = breaks <- seq(0, 4, by = 0.5),
-                       labels = paste(prettyNum(breaks, big.mark = ","),
-                                      "community centers per square km")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-theme_map() +
-  theme(legend.position = "right",
-    legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-```
-
-```{r, echo=FALSE}
-
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = commcenter, color = "green") +
-  geom_sf(data = policest, color = "red") +
-  theme_map() +
-  annotation_scale()
-
-```
-
-
-#how many open spaces overlap water?
-```{r, echo=FALSE}
-
-openspace <- openspace %>%
-  mutate(num_hydro = lengths(st_overlaps(openspace, hydro))) %>%
-  mutate(has_hydro = num_hydro > 0)
-
-n_hydro_openspace <- sum(openspace$has_hydro)
-
-n_hydro_openspace
-
-
-```
-
-```{r, echo=FALSE}
-
-left_side  <- st_bbox(hydro)$xmin
-top_side <- st_bbox(hydro)$ymax
-
-ggplot(hydro) +
-  geom_sf(fill = "lightblue", color = NA) +
-  geom_sf(data = openspace,
-          color = NA,
-          aes(fill = has_hydro)) +
-  scale_fill_manual(values = c("darkseagreen1", "forestgreen"),
-          name = "Boston Open Spaces\nby presence of a body of water", 
-          labels = c("Open Space without\nan overlapping body of water",
-                     "Open Space with an\noverlapping body of water")) +
-  annotation_scale(location = "br") +
-  annotation_north_arrow(location = "tr",
-                         style = north_arrow_minimal()) +
-  annotate(geom = "text", x = left_side, 
-           y = top_side - 2200, 
-           label = paste(n_hydro_openspace ,
-                         "of Boston's", 
-                         length(openspace$Name),
-                         "Open Spaces contain\nor overlap with", 
-                         "a body of water."),
-           hjust = 0, vjust = 0, size = 3) +
-  theme_map() +
-  theme(panel.background = element_rect(fill = "gray"),
-        legend.background = element_rect(fill = alpha("white", 0.5), 
-                                         color = "gray"))
-
 ```
 
 
