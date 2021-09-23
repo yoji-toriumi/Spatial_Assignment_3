@@ -1,5 +1,5 @@
 ---
-  title: "Spatial_Assignment_3"
+title: "Spatial_Assignment_3"
 author: "Group22: Jeb Polstein, Matt Khinda, Yoji Toriumi"
 date: "9/22/2021"
 output: html_document
